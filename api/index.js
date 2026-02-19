@@ -7,42 +7,42 @@ require('dotenv').config();
 const productsRouter = require('./products');
 const woodsRouter = require('./woods');
 const requestsRouter = require('./requests');
-const configRouter = require('./config');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// Security
+// ================= SECURITY =================
 app.use(helmet());
 
-// CORS
+// ================= CORS =================
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
 
-// Rate limit
+// ================= RATE LIMIT =================
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100
 });
+
 app.use('/api', limiter);
 
-// Body parser
+// ================= BODY PARSER =================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Routes
+// ================= ROUTES =================
 app.use('/api/products', productsRouter);
 app.use('/api/woods', woodsRouter);
 app.use('/api/requests', requestsRouter);
-app.use('/api/config', configRouter);
 
-// ✅ Health route
+// ================= ROOT CHECK =================
 app.get('/', (req, res) => {
   res.send("Backend Running ✅");
 });
 
+// ================= HEALTH CHECK =================
 app.get('/api/health', (req, res) => {
   res.json({
     status: "OK",
@@ -50,15 +50,22 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// ✅ Error handler
+// ================= ERROR HANDLER =================
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error(err.stack);
   res.status(500).json({
-    error: "Server Error"
+    error: "Internal Server Error"
   });
 });
 
-// ✅ Start server (Render needs this)
+// ================= 404 HANDLER =================
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Route Not Found"
+  });
+});
+
+// ================= START SERVER =================
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
